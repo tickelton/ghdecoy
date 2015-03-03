@@ -1,0 +1,23 @@
+ghdecoy
+=======
+
+ghdecoy is a tool to vandali^H improve the github contributions calendar. 
+It is inspired by gitfiti [https://github.com/gelstudios/gitfiti] but
+with a different use case in mind.
+
+ghdecoy allows you to create a git repository containing commits crafted
+in way so that when it is pushed to github the contribution calendar is
+overlayed with a distinct pattern so as to obscure the actual activity
+of the particular account.
+
+What sets ghdecoy apart from similar tool, like the mentioned gitfiti, is
+for now mostly the fact that it is primarily intended to be run
+non-interactively so it can e.g. easily be used in a cron job.
+
+In addition to that eventually it is supposed to take a more 'intelligent'
+approach to crafting it's fake commits. 
+The goal is for ghdecoy to be able to take into account and modify the
+commits in the decoy repository so that a constant static 'noise' can be
+displayed in the contributions calender regardless of the frequency of
+invocation of the tool.
+
