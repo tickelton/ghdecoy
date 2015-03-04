@@ -5,6 +5,7 @@ import urllib2
 import re
 import random
 import math
+import subprocess
 
 def USAGE():
     print """Usage: ghdecoy.ph [-h|--help] [-u USER] [-r REPO] COMMAND
@@ -113,6 +114,30 @@ def main():
             data_out.append({'date': data_in[i]['date'], 'count': random.randint(0,4)})
 
     cal_scale(data_out, data_in)
+
+    outdir = '/media/ramdisk/'
+
+    template = ('#!/bin/bash\n'
+        'REPO={0}\n'
+        'git init $REPO\n'
+        'cd $REPO\n'
+        'touch decoy\n'
+        'git add decoy\n'
+        '{1}\n'
+        'git remote add origin git@github.com:{2}/$REPO.git\n'
+        'git pull\n'
+        'git push -f -u origin master\n')
+    fake_commits = []
+    for d in data_out:
+        for i in range(d['count']):
+            fake_commits.append('echo {1} >> decoy\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'.format(d['date'], i))
+
+    f = open('/media/ramdisk/ghdecoy.sh', "w")
+    f.write(template.format(repo, "".join(fake_commits), user))
+    f.close()
+
+    os.chdir('/media/ramdisk')
+    subprocess.call(['sh', '/media/ramdisk/ghdecoy.sh'])
 
 if __name__ == '__main__':
     main()
