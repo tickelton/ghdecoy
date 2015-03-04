@@ -8,16 +8,18 @@ import math
 import subprocess
 
 def USAGE():
-    print """Usage: ghdecoy.ph [-h|--help] [-u USER] [-r REPO] COMMAND
+    print """Usage: ghdecoy.ph [-h|--help] [-d DIR] [-u USER] [-r REPO] COMMAND
 
   -h|--help : display this help message
+  -d DIR    : directory to craft the the fake repository in
   -u USER   : use the username USER instead of the current unix user
   -r REPO   : use the repository REPO instead of the default 'decoy'
 
   COMMAND   : one of the following:
-              init : initialize the calendar with random noise
-              fill : fill all occurences of 3 or more days in a row
-                     without commits with random noise
+              fill   : fill all occurences of 3 or more days in a row
+                       without commits with random noise
+              append : same as fill, but only fills the blank space
+                       after the last existing commit
 """
 
 def get_calendar(user):
@@ -53,7 +55,7 @@ def cal_scale(data_out, data_in):
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hr:u:", ["help"])
+        opts, args = getopt.getopt(sys.argv[1:], "hd:r:u:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
         USAGE()
@@ -65,7 +67,8 @@ def main():
 
     repo = 'decoy'
     user = os.getenv("USER")
-    if args[0] in ("init", "fill"):
+    wdir = '/tmp'
+    if args[0] in ("append", "fill"):
         action = args[0]
     else:
         print "Invalid command: {}".format(args[0])
@@ -75,6 +78,8 @@ def main():
         if o in ("-h", "--help"):
             USAGE()
             sys.exit()
+        elif o == "-d":
+            wdir = a
         elif o == "-r":
             repo = a
         elif o == "-u":
