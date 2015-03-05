@@ -7,7 +7,7 @@ with a different use case in mind.
 
 ghdecoy allows you to create a git repository containing commits crafted
 in way so that when it is pushed to github the contribution calendar is
-overlayed with a distinct pattern so as to obscure the actual activity
+overlaid with a distinct pattern so as to obscure the actual activity
 of the particular account.
 
 What sets ghdecoy apart from similar tool, like the mentioned gitfiti, is
