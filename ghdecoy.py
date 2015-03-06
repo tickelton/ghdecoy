@@ -31,31 +31,30 @@ def get_calendar(user):
     url = 'https://github.com/users/' + user + '/contributions'
     try:
         page = urllib2.urlopen(url)
-    except (urllib2.HTTPError, urllib2.URLError) as e:
-        print ("There was a problem fetching data from {0}".format(url))
-        print (e)
+    except (urllib2.HTTPError, urllib2.URLError) as err:
+        print "There was a problem fetching data from {0}".format(url)
+        print err
         return None
     return page.readlines()
 
 
 def get_factor(data):
-    m = 0
-    for d in data:
-        i = int(d['count'])
-        if i > m:
-            m = i
+    max_val = 0
+    for entry in data:
+        if entry['count'] > max_val:
+            max_val = entry['count']
 
-    f = m / 4.0
-    if f == 0:
+    factor = max_val / 4.0
+    if factor == 0:
         return 1
-    f = math.ceil(f)
-    f = int(f)
-    return f
+    factor = math.ceil(factor)
+    factor = int(factor)
+    return factor
 
 
 def cal_scale(scale_factor, data_out):
-    for d in data_out:
-        d['count'] *= scale_factor
+    for entry in data_out:
+        entry['count'] *= scale_factor
 
 
 def parse_args(argv):
@@ -82,18 +81,18 @@ def parse_args(argv):
         print "Invalid command: {}".format(args[0])
         sys.exit(1)
 
-    for o, a in opts:
-        if o in ("-h", "--help"):
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
             usage()
             sys.exit(0)
-        elif o == "-n":
+        elif opt == "-n":
             conf['dryrun'] = True
-        elif o == "-d":
-            conf['wdir'] = a
-        elif o == "-r":
-            conf['repo'] = a
-        elif o == "-u":
-            conf['user'] = a
+        elif opt == "-d":
+            conf['wdir'] = arg
+        elif opt == "-r":
+            conf['repo'] = arg
+        elif opt == "-u":
+            conf['user'] = arg
 
     if not conf['user']:
         print "Could not determine username; please use -u"
@@ -102,27 +101,27 @@ def parse_args(argv):
     return conf
 
 
-def create_dataset(data_in, data_out):
+def create_dataset(data_in):
+    ret = []
     idx_start = -1
     idx_cur = 0
+    idx_max = len(data_in) - 1
     random.seed()
 
-    for d in data_in:
-        if idx_start > -1:
-            if d['count'] != '0':
-                for i in range(idx_start, idx_cur):
-                    data_out.append({'date': data_in[i]['date'],
-                                     'count': random.randint(0, 4)})
+    for entry in data_in:
+        if entry['count'] or idx_cur == idx_max:
+            if idx_start > -1:
+                for i in range(idx_start,
+                               idx_cur if entry['count'] else idx_cur + 1):
+                    ret.append({'date': data_in[i]['date'],
+                                'count': random.randint(0, 4)})
                 idx_start = -1
-        elif d['count'] == '0':
+        elif idx_start == -1:
             idx_start = idx_cur
         idx_cur += 1
-    if idx_start > -1:
-        for i in range(idx_start, idx_cur):
-            data_out.append({'date': data_in[i]['date'],
-                             'count': random.randint(0, 4)})
 
-    cal_scale(get_factor(data_in), data_out)
+    cal_scale(get_factor(data_in), ret)
+    return ret
 
 
 def main():
@@ -136,13 +135,14 @@ def main():
 
     data_in = []
     for line in cal:
-        m = re.search('data-count="(\d+)".*data-date="(\d+-\d+-\d+)"', line)
-        if not m:
+        match = re.search(r'data-count="(\d+)".*data-date="(\d+-\d+-\d+)"',
+                          line)
+        if not match:
             continue
-        data_in.append({'date': m.group(2) + "T12:00:00", 'count': m.group(1)})
+        data_in.append({'date': match.group(2) + "T12:00:00",
+                        'count': int(match.group(1))})
 
-    data_out = []
-    create_dataset(data_in, data_out)
+    data_out = create_dataset(data_in)
 
     template = ('#!/bin/bash\n'
                 'REPO={0}\n'
@@ -157,16 +157,16 @@ def main():
         template = ''.join([template, 'git push -f -u origin master\n'])
 
     fake_commits = []
-    for d in data_out:
-        for i in range(d['count']):
+    for entry in data_out:
+        for i in range(entry['count']):
             fake_commits.append(
                 'echo {1} >> decoy\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'.format(
-                    d['date'], i))
+                    entry['date'], i))
 
-    script_file = ''.join([conf['wdir'], '/ghdecoy.sh'])
-    f = open(script_file, "w")
-    f.write(template.format(conf['repo'], ''.join(fake_commits), conf['user']))
-    f.close()
+    script_name = ''.join([conf['wdir'], '/ghdecoy.sh'])
+    script_fo = open(script_name, "w")
+    script_fo.write(template.format(conf['repo'], ''.join(fake_commits), conf['user']))
+    script_fo.close()
 
     os.chdir(conf['wdir'])
     subprocess.call(['sh', './ghdecoy.sh'])
