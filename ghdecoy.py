@@ -11,8 +11,9 @@ import subprocess
 
 
 def usage():
-    print """Usage: ghdecoy.ph [-hn] [--help] [-d DIR] [-u USER] [-r REPO] COMMAND
+    print """Usage: ghdecoy.ph [ARGUMENTS] COMMAND
 
+  ARGUMENTS:
   -h|--help : display this help message
   -n        : just create the decoy repo but don't push it to github
   -d DIR    : directory to craft the the fake repository in
@@ -101,27 +102,55 @@ def parse_args(argv):
     return conf
 
 
-def create_dataset(data_in):
+def create_dataset(data_in, action):
     ret = []
     idx_start = -1
     idx_cur = 0
     idx_max = len(data_in) - 1
     random.seed()
 
-    for entry in data_in:
+    if action == 'append':
+        idx_cur = idx_max
+        for entry in reversed(data_in):
+            if entry['count']:
+                break
+            idx_cur -= 1
+
+    # NOTE: This won't fill the last day if it is not preceded by at least one
+    # other empty day. Doesn't matter though, as we're only filling blocks of
+    # at least three continuous empty days.
+    for entry in data_in[idx_cur:]:
         if entry['count'] or idx_cur == idx_max:
             if idx_start > -1:
-                for i in range(idx_start,
-                               idx_cur if entry['count'] else idx_cur + 1):
+                idx_range = range(idx_start,
+                                  idx_cur if entry['count'] else idx_cur + 1)
+                idx_start = -1
+                if len(idx_range) < 3:
+                    idx_cur += 1
+                    continue
+                for i in idx_range:
                     ret.append({'date': data_in[i]['date'],
                                 'count': random.randint(0, 4)})
-                idx_start = -1
         elif idx_start == -1:
             idx_start = idx_cur
         idx_cur += 1
 
     cal_scale(get_factor(data_in), ret)
     return ret
+
+
+def create_script(conf, data_out, template):
+    fake_commits = []
+    for entry in data_out:
+        for i in range(entry['count']):
+            fake_commits.append(
+                'echo {1} >> decoy\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'.format(
+                    entry['date'], i))
+    script_name = ''.join([conf['wdir'], '/ghdecoy.sh'])
+    script_fo = open(script_name, "w")
+    script_fo.write(
+        template.format(conf['repo'], ''.join(fake_commits), conf['user']))
+    script_fo.close()
 
 
 def main():
@@ -142,7 +171,7 @@ def main():
         data_in.append({'date': match.group(2) + "T12:00:00",
                         'count': int(match.group(1))})
 
-    data_out = create_dataset(data_in)
+    data_out = create_dataset(data_in, conf['action'])
 
     template = ('#!/bin/bash\n'
                 'REPO={0}\n'
@@ -156,17 +185,7 @@ def main():
     if not conf['dryrun']:
         template = ''.join([template, 'git push -f -u origin master\n'])
 
-    fake_commits = []
-    for entry in data_out:
-        for i in range(entry['count']):
-            fake_commits.append(
-                'echo {1} >> decoy\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'.format(
-                    entry['date'], i))
-
-    script_name = ''.join([conf['wdir'], '/ghdecoy.sh'])
-    script_fo = open(script_name, "w")
-    script_fo.write(template.format(conf['repo'], ''.join(fake_commits), conf['user']))
-    script_fo.close()
+    create_script(conf, data_out, template)
 
     os.chdir(conf['wdir'])
     subprocess.call(['sh', './ghdecoy.sh'])
