@@ -8,6 +8,7 @@ import re
 import random
 import math
 import subprocess
+import shutil
 
 
 def usage():
@@ -15,14 +16,16 @@ def usage():
 
   ARGUMENTS:
   -h|--help : display this help message
+  -k        : do not delete generated repository and upload script
   -n        : just create the decoy repo but don't push it to github
   -d DIR    : directory to craft the the fake repository in
+  -m COUNT  : only fill gaps of at least COUNT days (default=5)
   -u USER   : use the username USER instead of the current unix user
   -r REPO   : use the repository REPO instead of the default 'decoy'
 
   COMMAND   : one of the following:
-              fill   : fill all occurrences of 3 or more days in a row
-                       without commits with random noise
+              fill   : fill all occurrences of 5 or more consecutive
+                       days without commits with random noise
               append : same as fill, but only fills the blank space
                        after the last existing commit
 """
@@ -60,7 +63,7 @@ def cal_scale(scale_factor, data_out):
 
 def parse_args(argv):
     try:
-        opts, args = getopt.getopt(argv[1:], "hnd:r:u:", ["help"])
+        opts, args = getopt.getopt(argv[1:], "hknd:m:r:u:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -72,6 +75,8 @@ def parse_args(argv):
 
     conf = {
         'dryrun': False,
+        'keep' : False,
+        'min_days' : 5,
         'repo': 'decoy',
         'user': os.getenv("USER"),
         'wdir': '/tmp'
@@ -86,6 +91,10 @@ def parse_args(argv):
         if opt in ("-h", "--help"):
             usage()
             sys.exit(0)
+        elif opt == "-k":
+            conf['keep'] = True
+        elif opt == "-m":
+            conf['min_days'] = int(arg)
         elif opt == "-n":
             conf['dryrun'] = True
         elif opt == "-d":
@@ -102,7 +111,7 @@ def parse_args(argv):
     return conf
 
 
-def create_dataset(data_in, action):
+def create_dataset(data_in, action, min_days):
     ret = []
     idx_start = -1
     idx_cur = 0
@@ -125,7 +134,7 @@ def create_dataset(data_in, action):
                 idx_range = range(idx_start,
                                   idx_cur if entry['count'] else idx_cur + 1)
                 idx_start = -1
-                if len(idx_range) < 3:
+                if len(idx_range) < min_days:
                     idx_cur += 1
                     continue
                 for i in idx_range:
@@ -155,6 +164,7 @@ def create_script(conf, data_out, template):
 
 def main():
     conf = parse_args(sys.argv)
+    ret = 0
 
     print "{} {} {}".format(conf['user'], conf['repo'], conf['action'])
 
@@ -171,9 +181,10 @@ def main():
         data_in.append({'date': match.group(2) + "T12:00:00",
                         'count': int(match.group(1))})
 
-    data_out = create_dataset(data_in, conf['action'])
+    data_out = create_dataset(data_in, conf['action'], conf['min_days'])
 
     template = ('#!/bin/bash\n'
+                'set -e\n'
                 'REPO={0}\n'
                 'git init $REPO\n'
                 'cd $REPO\n'
@@ -181,14 +192,26 @@ def main():
                 'git add decoy\n'
                 '{1}\n'
                 'git remote add origin git@github.com:{2}/$REPO.git\n'
-                'git pull\n')
+                'set +e\n'
+                'git pull\n'
+                'set -e\n')
     if not conf['dryrun']:
         template = ''.join([template, 'git push -f -u origin master\n'])
 
     create_script(conf, data_out, template)
 
     os.chdir(conf['wdir'])
-    subprocess.call(['sh', './ghdecoy.sh'])
+    try:
+        subprocess.check_call(['sh', './ghdecoy.sh'])
+    except (subprocess.CalledProcessError) as err:
+        print err
+        ret = 1
+
+    if not conf['keep']:
+        shutil.rmtree(conf['repo'], True)
+        os.remove('ghdecoy.sh')
+
+    sys.exit(ret)
 
 
 if __name__ == '__main__':
