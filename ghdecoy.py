@@ -20,8 +20,10 @@ def usage():
   -n        : just create the decoy repo but don't push it to github
   -d DIR    : directory to craft the the fake repository in
   -m COUNT  : only fill gaps of at least COUNT days (default=5)
-  -u USER   : use the username USER instead of the current unix user
   -r REPO   : use the repository REPO instead of the default 'decoy'
+  -s NUM    : sets the darkest shade of contribution 'pixels' to be
+              created to NUM. Valid values are 1-4 (default=4).
+  -u USER   : use the username USER instead of the current unix user
 
   COMMAND   : one of the following:
               fill   : fill all occurrences of 5 or more consecutive
@@ -63,7 +65,7 @@ def cal_scale(scale_factor, data_out):
 
 def parse_args(argv):
     try:
-        opts, args = getopt.getopt(argv[1:], "hknd:m:r:u:", ["help"])
+        opts, args = getopt.getopt(argv[1:], "hknd:m:r:s:u:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -76,6 +78,7 @@ def parse_args(argv):
     conf = {
         'dryrun': False,
         'keep' : False,
+        'max_shade' : 4,
         'min_days' : 5,
         'repo': 'decoy',
         'user': os.getenv("USER"),
@@ -101,6 +104,10 @@ def parse_args(argv):
             conf['wdir'] = arg
         elif opt == "-r":
             conf['repo'] = arg
+        elif opt == "-s":
+            val = int(arg)
+            if 0 < val < 5:
+                conf['max_shade'] = val
         elif opt == "-u":
             conf['user'] = arg
 
@@ -111,7 +118,7 @@ def parse_args(argv):
     return conf
 
 
-def create_dataset(data_in, action, min_days):
+def create_dataset(data_in, action, min_days, max_shade):
     ret = []
     idx_start = -1
     idx_cur = 0
@@ -139,7 +146,7 @@ def create_dataset(data_in, action, min_days):
                     continue
                 for i in idx_range:
                     ret.append({'date': data_in[i]['date'],
-                                'count': random.randint(0, 4)})
+                                'count': random.randint(0, max_shade)})
         elif idx_start == -1:
             idx_start = idx_cur
         idx_cur += 1
@@ -181,7 +188,8 @@ def main():
         data_in.append({'date': match.group(2) + "T12:00:00",
                         'count': int(match.group(1))})
 
-    data_out = create_dataset(data_in, conf['action'], conf['min_days'])
+    data_out = create_dataset(data_in, conf['action'],
+                              conf['min_days'], conf['max_shade'])
 
     template = ('#!/bin/bash\n'
                 'set -e\n'
