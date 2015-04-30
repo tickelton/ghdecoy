@@ -2,7 +2,7 @@ ghdecoy
 =======
 
 ghdecoy is a tool to vandali^H optimize the github contributions calendar. 
-It is inspired by gitfiti [https://github.com/gelstudios/gitfiti] but
+It is inspired by [gitfiti](https://github.com/gelstudios/gitfiti) but
 with a different use case in mind.
 
 ghdecoy allows you to create a git repository containing commits crafted
@@ -34,6 +34,6 @@ Currently the following two modes are supported:
 
 EXAMPLE
 -------
-
+```shell
 python ghdecoy.sh -u tickelton append
-
+```
