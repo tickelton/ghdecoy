@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+"""Usage: ghdecoy.ph [ARGS] CMD
+
+  ARGS:
+  -h|--help : display this help message
+  -k        : do not delete generated repository and upload script
+  -n        : just create the decoy repo but don't push it to github
+  -d DIR    : directory to craft the the fake repository in
+  -m COUNT  : only fill gaps of at least COUNT days (default=5)
+  -r REPO   : use the repository REPO instead of the default 'decoy'
+  -s NUM    : sets the darkest shade of contribution 'pixels' to be
+              created to NUM. Valid values are 1-4 (default=4).
+  -u USER   : use the username USER instead of the current unix user
+
+  CMD       : one of the following:
+              fill   : fill all occurrences of 5 or more consecutive
+                       days without commits with random noise
+              append : same as fill, but only fills the blank space
+                       after the last existing commit
+"""
 
 import getopt
 import sys
@@ -12,28 +31,14 @@ import shutil
 
 
 def usage():
-    print """Usage: ghdecoy.ph [ARGUMENTS] COMMAND
+    """Prints the usage message."""
 
-  ARGUMENTS:
-  -h|--help : display this help message
-  -k        : do not delete generated repository and upload script
-  -n        : just create the decoy repo but don't push it to github
-  -d DIR    : directory to craft the the fake repository in
-  -m COUNT  : only fill gaps of at least COUNT days (default=5)
-  -r REPO   : use the repository REPO instead of the default 'decoy'
-  -s NUM    : sets the darkest shade of contribution 'pixels' to be
-              created to NUM. Valid values are 1-4 (default=4).
-  -u USER   : use the username USER instead of the current unix user
-
-  COMMAND   : one of the following:
-              fill   : fill all occurrences of 5 or more consecutive
-                       days without commits with random noise
-              append : same as fill, but only fills the blank space
-                       after the last existing commit
-"""
+    print __doc__
 
 
 def get_calendar(user):
+    """Retrieves the given user's contribution data from Github."""
+
     url = 'https://github.com/users/' + user + '/contributions'
     try:
         page = urllib2.urlopen(url)
@@ -45,6 +50,8 @@ def get_calendar(user):
 
 
 def get_factor(data):
+    """Calculates the factor by which the calender data has to be scaled."""
+
     max_val = 0
     for entry in data:
         if entry['count'] > max_val:
@@ -59,11 +66,15 @@ def get_factor(data):
 
 
 def cal_scale(scale_factor, data_out):
+    """Scales the calendar data by a given factor."""
+
     for entry in data_out:
         entry['count'] *= scale_factor
 
 
 def parse_args(argv):
+    """Parses the script's arguments via getopt."""
+
     try:
         opts, args = getopt.getopt(argv[1:], "hknd:m:r:s:u:", ["help"])
     except getopt.GetoptError as err:
@@ -77,9 +88,9 @@ def parse_args(argv):
 
     conf = {
         'dryrun': False,
-        'keep' : False,
-        'max_shade' : 4,
-        'min_days' : 5,
+        'keep': False,
+        'max_shade': 4,
+        'min_days': 5,
         'repo': 'decoy',
         'user': os.getenv("USER"),
         'wdir': '/tmp'
@@ -119,6 +130,8 @@ def parse_args(argv):
 
 
 def create_dataset(data_in, action, min_days, max_shade):
+    """Creates a data set representing the desired commits."""
+
     ret = []
     idx_start = -1
     idx_cur = 0
@@ -156,6 +169,12 @@ def create_dataset(data_in, action, min_days, max_shade):
 
 
 def create_script(conf, data_out, template):
+    """Creates a bash script that executes the actual git operations.
+
+    The bash script created by this function creates a git repository, fills
+    it with commits as specified via it's arguments and pushes it to github.
+    """
+
     fake_commits = []
     for entry in data_out:
         for i in range(entry['count']):
@@ -170,6 +189,8 @@ def create_script(conf, data_out, template):
 
 
 def main():
+    """The scripts main function."""
+
     conf = parse_args(sys.argv)
     ret = 0
 
@@ -211,7 +232,7 @@ def main():
     os.chdir(conf['wdir'])
     try:
         subprocess.check_call(['sh', './ghdecoy.sh'])
-    except (subprocess.CalledProcessError) as err:
+    except subprocess.CalledProcessError as err:
         print err
         ret = 1
 
