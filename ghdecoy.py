@@ -54,6 +54,7 @@ def get_factor(data):
 
     max_val = 0
     for entry in data:
+        # FIXME: Maybe check for negative values here ?
         if entry['count'] > max_val:
             max_val = entry['count']
 
@@ -68,6 +69,7 @@ def get_factor(data):
 def cal_scale(scale_factor, data_out):
     """Scales the calendar data by a given factor."""
 
+    # TODO: Check for empty list.
     for entry in data_out:
         entry['count'] *= scale_factor
 
