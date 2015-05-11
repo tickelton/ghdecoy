@@ -10,8 +10,16 @@ class GHDecoyOnlineTests(unittest.TestCase):
         self.assertEqual(cal[0].find('<svg'), 0)
 
 
-class GHDecoyOfflineTests(unittest.TestCase):
-    """Unit tests for 'ghdecoy.py' that don't require an internet connection"""
+class GHDecoyIOTests(unittest.TestCase):
+    """Unit tests for 'ghdecoy.py' that perform disk IO"""
+
+
+class GHDecoyMiscTests(unittest.TestCase):
+    """Miscellaneous unit tests for 'ghdecoy.py'
+
+    The tests in this class neither require an internet connection nor do the
+    create files on disk.
+    """
 
     def test_get_factor_for_vals_1_to_4(self):
         data = [
@@ -90,5 +98,42 @@ class GHDecoyOfflineTests(unittest.TestCase):
         with self.assertRaisesRegexp(SystemExit, '^0$'):
             ghdecoy.parse_args(['./ghdecoy.py', '-h'])
 
+    def test_parse_args_nocmd(self):
+        with self.assertRaisesRegexp(SystemExit, '^1$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '-u', 'tickelton'])
+
+    def test_parse_args_invalid_arg(self):
+        # TODO: Why is the return code not also 1 here?
+        with self.assertRaisesRegexp(SystemExit, '^2$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '-x', 'fill'])
+
+    def test_parse_args_invalid_shade(self):
+        conf = ghdecoy.parse_args(['./ghdecoy.py', '-s', '99', 'fill'])
+        self.assertEqual(conf['max_shade'], 4)
+
+    def test_parse_args_all_args(self):
+        conf = ghdecoy.parse_args(
+            [
+                './ghdecoy.py',
+                '-k',
+                '-n',
+                '-d', '/fake/dir',
+                '-m', '99',
+                '-r', 'testrepo',
+                '-s', '2',
+                '-u', 'testuser',
+                'append',
+            ]
+        )
+        self.assertTrue(conf['dryrun'])
+        self.assertTrue(conf['keep'])
+        self.assertEqual(conf['wdir'], '/fake/dir')
+        self.assertEqual(conf['min_days'], 99)
+        self.assertEqual(conf['repo'], 'testrepo')
+        self.assertEqual(conf['max_shade'], 2)
+        self.assertEqual(conf['user'], 'testuser')
+        self.assertEqual(conf['action'], 'append')
+
+
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(buffer=True)
