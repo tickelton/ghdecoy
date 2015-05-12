@@ -70,6 +70,8 @@ def cal_scale(scale_factor, data_out):
     """Scales the calendar data by a given factor."""
 
     # TODO: Check for empty list.
+    #       Or not. Maybe an empty list is fine here and create_dataset() should
+    #       Throw an exception in that case.
     for entry in data_out:
         entry['count'] *= scale_factor
 
