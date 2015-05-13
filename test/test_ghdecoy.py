@@ -1,5 +1,6 @@
 import unittest
 import ghdecoy
+import os
 
 
 class GHDecoyOnlineTests(unittest.TestCase):
@@ -12,6 +13,89 @@ class GHDecoyOnlineTests(unittest.TestCase):
 
 class GHDecoyIOTests(unittest.TestCase):
     """Unit tests for 'ghdecoy.py' that perform disk IO"""
+
+    outfile = "/tmp/ghdecoy.sh"
+
+    def test_create_script(self):
+        conf = {
+            'dryrun': False,
+            'wdir': '/tmp',
+            'min_days': 1,
+            'keep': True,
+            'repo': 'decoy',
+            'max_shade': 4,
+            'user': 'tickelton',
+            'action': 'fill'
+        }
+        data = [
+            {'date': '2015-01-01T12:00:00', 'count': 1},
+            {'date': '2015-01-02T12:00:00', 'count': 2},
+            {'date': '2015-01-03T12:00:00', 'count': 3},
+            {'date': '2015-01-04T12:00:00', 'count': 4},
+            {'date': '2015-01-05T12:00:00', 'count': 0},
+        ]
+        template = (
+            '#!/bin/bash\n'
+            'set -e\n'
+            'REPO={0}\n'
+            'git init $REPO\n'
+            'cd $REPO\n'
+            'touch decoy\n'
+            'git add decoy\n'
+            '{1}\n'
+            'git remote add origin git@github.com:{2}/$REPO.git\n'
+            'set +e\n'
+            'git pull\n'
+            'set -e\n'
+            'git push -f -u origin master\n'
+        )
+        result = [
+            '#!/bin/bash\n',
+            'set -e\n',
+            'REPO=decoy\n',
+            'git init $REPO\n',
+            'cd $REPO\n',
+            'touch decoy\n',
+            'git add decoy\n',
+            'echo 0 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-01T12:00:00 GIT_COMMITTER_DATE=2015-01-01T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 0 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-02T12:00:00 GIT_COMMITTER_DATE=2015-01-02T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 1 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-02T12:00:00 GIT_COMMITTER_DATE=2015-01-02T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 0 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 1 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 2 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 0 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 1 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 2 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            'echo 3 >> decoy\n',
+            'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
+            '\n',
+            'git remote add origin git@github.com:tickelton/$REPO.git\n',
+            'set +e\n',
+            'git pull\n',
+            'set -e\n',
+            'git push -f -u origin master\n',
+        ]
+
+        ghdecoy.create_script(conf, data, template)
+
+        with open(self.outfile, "r") as shfile:
+            readback = shfile.readlines()
+
+        self.maxDiff = None
+        self.assertListEqual(result, readback)
+
+    @classmethod
+    def tearDownClass(cls):
+        os.remove(cls.outfile)
 
 
 class GHDecoyMiscTests(unittest.TestCase):
