@@ -62,7 +62,7 @@ def get_factor(data):
     factor = max_val / 4.0
     if factor == 0:
         return 1
-    factor = math.ceil(factor)
+    factor = math.floor(factor)
     factor = int(factor)
     return factor
 
