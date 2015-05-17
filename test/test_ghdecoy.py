@@ -195,7 +195,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             ghdecoy.parse_args(['./ghdecoy.py', '-x', 'fill'])
 
     def test_parse_args_invalid_shade(self):
-        conf = ghdecoy.parse_args(['./ghdecoy.py', '-s', '99', 'fill'])
+        conf = ghdecoy.parse_args(['./ghdecoy.py', '-p', '99', 'fill'])
         self.assertEqual(conf['max_shade'], 4)
 
     def test_parse_args_all_args(self):
@@ -204,10 +204,11 @@ class GHDecoyMiscTests(unittest.TestCase):
                 './ghdecoy.py',
                 '-k',
                 '-n',
+                '-s',
                 '-d', '/fake/dir',
                 '-m', '99',
                 '-r', 'testrepo',
-                '-s', '2',
+                '-p', '2',
                 '-u', 'testuser',
                 'append',
             ]
@@ -372,6 +373,51 @@ class GHDecoyMiscTests(unittest.TestCase):
         ]
         ret = ghdecoy.create_dataset(data, 'append', 3, 4)
         self.assertListEqual([], ret)
+
+    def test_create_template_https_wet(self):
+        conf = {
+            'ssh': False,
+            'dryrun': False,
+        }
+        result = (
+            '#!/bin/bash\n'
+            'set -e\n'
+            'REPO={0}\n'
+            'git init $REPO\n'
+            'cd $REPO\n'
+            'touch decoy\n'
+            'git add decoy\n'
+            '{1}\n'
+            'git remote add origin https://github.com/{2}/$REPO.git\n'
+            'set +e\n'
+            'git pull\n'
+            'set -e\n'
+            'git push -f -u origin master\n'
+        )
+        ret = ghdecoy.create_template(conf)
+        self.assertEqual(result, ret)
+
+    def test_create_template_ssh_dry(self):
+        conf = {
+            'ssh': True,
+            'dryrun': True,
+        }
+        result = (
+            '#!/bin/bash\n'
+            'set -e\n'
+            'REPO={0}\n'
+            'git init $REPO\n'
+            'cd $REPO\n'
+            'touch decoy\n'
+            'git add decoy\n'
+            '{1}\n'
+            'git remote add origin git@github.com:{2}/$REPO.git\n'
+            'set +e\n'
+            'git pull\n'
+            'set -e\n'
+        )
+        ret = ghdecoy.create_template(conf)
+        self.assertEqual(result, ret)
 
 
 if __name__ == '__main__':

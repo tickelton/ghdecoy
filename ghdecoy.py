@@ -5,10 +5,11 @@
   -h|--help : display this help message
   -k        : do not delete generated repository and upload script
   -n        : just create the decoy repo but don't push it to github
+  -s        : push over ssh instead of https
   -d DIR    : directory to craft the the fake repository in
   -m COUNT  : only fill gaps of at least COUNT days (default=5)
   -r REPO   : use the repository REPO instead of the default 'decoy'
-  -s NUM    : sets the darkest shade of contribution 'pixels' to be
+  -p NUM    : sets the darkest shade of contribution 'pixels' to be
               created to NUM. Valid values are 1-4 (default=4).
   -u USER   : use the username USER instead of the current unix user
 
@@ -80,7 +81,7 @@ def parse_args(argv):
     """Parses the script's arguments via getopt."""
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hknd:m:r:s:u:", ["help"])
+        opts, args = getopt.getopt(argv[1:], "hknsd:m:r:p:u:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -96,6 +97,7 @@ def parse_args(argv):
         'max_shade': 4,
         'min_days': 5,
         'repo': 'decoy',
+        'ssh': False,
         'user': os.getenv("USER"),
         'wdir': '/tmp'
     }
@@ -106,7 +108,9 @@ def parse_args(argv):
         sys.exit(1)
 
     for opt, arg in opts:
-        if opt in ("-h", "--help"):
+        if opt == "-d":
+            conf['wdir'] = arg
+        elif opt in ("-h", "--help"):
             usage()
             sys.exit(0)
         elif opt == "-k":
@@ -115,14 +119,14 @@ def parse_args(argv):
             conf['min_days'] = int(arg)
         elif opt == "-n":
             conf['dryrun'] = True
-        elif opt == "-d":
-            conf['wdir'] = arg
-        elif opt == "-r":
-            conf['repo'] = arg
-        elif opt == "-s":
+        elif opt == "-p":
             val = int(arg)
             if 0 < val < 5:
                 conf['max_shade'] = val
+        elif opt == "-r":
+            conf['repo'] = arg
+        elif opt == "-s":
+            conf['ssh'] = True
         elif opt == "-u":
             conf['user'] = arg
 
@@ -192,6 +196,34 @@ def create_script(conf, data_out, template):
     script_fo.close()
 
 
+def create_template(conf):
+    """ Creates a template format string for the repo creation script."""
+    template = (
+        '#!/bin/bash\n'
+        'set -e\n'
+        'REPO={0}\n'
+        'git init $REPO\n'
+        'cd $REPO\n'
+        'touch decoy\n'
+        'git add decoy\n'
+        '{1}\n'
+    )
+
+    if conf['ssh']:
+        template = ''.join([template,
+            'git remote add origin git@github.com:{2}/$REPO.git\n'])
+    else:
+        template = ''.join([template,
+            'git remote add origin https://github.com/{2}/$REPO.git\n'])
+
+    template = ''.join([template, 'set +e\ngit pull\nset -e\n'])
+
+    if not conf['dryrun']:
+        template = ''.join([template, 'git push -f -u origin master\n'])
+
+    return template
+
+
 def main():
     """The scripts main function."""
 
@@ -216,22 +248,7 @@ def main():
     data_out = create_dataset(data_in, conf['action'],
                               conf['min_days'], conf['max_shade'])
 
-    template = ('#!/bin/bash\n'
-                'set -e\n'
-                'REPO={0}\n'
-                'git init $REPO\n'
-                'cd $REPO\n'
-                'touch decoy\n'
-                'git add decoy\n'
-                '{1}\n'
-                'git remote add origin git@github.com:{2}/$REPO.git\n'
-                'set +e\n'
-                'git pull\n'
-                'set -e\n')
-    if not conf['dryrun']:
-        template = ''.join([template, 'git push -f -u origin master\n'])
-
-    create_script(conf, data_out, template)
+    create_script(conf, data_out, create_template(conf))
 
     os.chdir(conf['wdir'])
     try:
