@@ -128,7 +128,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-01T12:00:00', 'count': 5},
         ]
         factor = ghdecoy.get_factor(data)
-        self.assertEqual(factor, 2)
+        self.assertEqual(factor, 1)
 
     def test_get_factor_for_max_val_8(self):
         data = [
