@@ -10,11 +10,20 @@ in way so that when it is pushed to github periods in the contribution
 calendar containing no commits will be filled with a random pattern so your
 account looks sufficiently active.
 
-Installation
+Dependencies
 ------------
 
 ghdecoy.py only requires a working installation of python 2.7. No
 additional packages are required.
+
+Installation
+------------
+
+ghdecoy.py can be run as is from the repository.  
+If desired it can also be installed using the standard python install command:
+```shell
+python setup.py install
+```
 
 Usage
 -----
