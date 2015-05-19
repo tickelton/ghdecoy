@@ -167,6 +167,18 @@ class GHDecoyMiscTests(unittest.TestCase):
         with self.assertRaisesRegexp(SystemExit, '^0$'):
             ghdecoy.parse_args(['./ghdecoy.py', '-h'])
 
+    def test_parse_args_help_long(self):
+        with self.assertRaisesRegexp(SystemExit, '^0$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '--help'])
+
+    def test_parse_args_version(self):
+        with self.assertRaisesRegexp(SystemExit, '^0$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '-v'])
+
+    def test_parse_args_version_long(self):
+        with self.assertRaisesRegexp(SystemExit, '^0$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '--version'])
+
     def test_parse_args_nocmd(self):
         with self.assertRaisesRegexp(SystemExit, '^1$'):
             ghdecoy.parse_args(['./ghdecoy.py', '-u', 'tickelton'])

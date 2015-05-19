@@ -1,23 +1,24 @@
 #!/usr/bin/env python
-"""Usage: ghdecoy.ph [ARGS] CMD
+"""Usage: ghdecoy.py [ARGS] CMD
 
   ARGS:
-  -h|--help : display this help message
-  -k        : do not delete generated repository and upload script
-  -n        : just create the decoy repo but don't push it to github
-  -s        : push over ssh instead of https
-  -d DIR    : directory to craft the the fake repository in
-  -m COUNT  : only fill gaps of at least COUNT days (default=5)
-  -r REPO   : use the repository REPO instead of the default 'decoy'
-  -p NUM    : sets the darkest shade of contribution 'pixels' to be
-              created to NUM. Valid values are 1-4 (default=4).
-  -u USER   : use the username USER instead of the current unix user
+  -h|--help    : display this help message
+  -k           : do not delete generated repository and upload script
+  -n           : just create the decoy repo but don't push it to github
+  -s           : push over ssh instead of https
+  -v|--version : print version information and exit
+  -d DIR       : directory to craft the the fake repository in
+  -m COUNT     : only fill gaps of at least COUNT days (default=5)
+  -r REPO      : use the repository REPO instead of the default 'decoy'
+  -p NUM       : sets the darkest shade of contribution 'pixels' to be
+                 created to NUM. Valid values are 1-4 (default=4).
+  -u USER      : use the username USER instead of the current unix user
 
-  CMD       : one of the following:
-              fill   : fill all occurrences of 5 or more consecutive
-                       days without commits with random noise
-              append : same as fill, but only fills the blank space
-                       after the last existing commit
+  CMD          : one of the following:
+                 fill   : fill all occurrences of 5 or more consecutive
+                          days without commits with random noise
+                 append : same as fill, but only fills the blank space
+                          after the last existing commit
 """
 
 import getopt
@@ -30,11 +31,19 @@ import math
 import subprocess
 import shutil
 
+__version__ = '0.1.0'
+
 
 def usage():
     """Prints the usage message."""
 
     print __doc__
+
+
+def version():
+    """Prints version information."""
+
+    print "ghdecoy.py {}".format(__version__)
 
 
 def get_calendar(user):
@@ -57,7 +66,7 @@ def get_factor(data):
     for entry in data:
         if entry['count'] < 0:
             sys.stderr.write(
-                'Warning: Found invalid value ({}) at {}.\n'.format(
+                "Warning: Found invalid value ({}) at {}.\n".format(
                     entry['count'], entry['date']
                 )
             )
@@ -84,7 +93,8 @@ def parse_args(argv):
     """Parses the script's arguments via getopt."""
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hknsd:m:r:p:u:", ["help"])
+        opts, args = getopt.getopt(
+            argv[1:], "hknsvd:m:r:p:u:", ["help", "version"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -123,6 +133,9 @@ def parse_args(argv):
             conf['ssh'] = True
         elif opt == "-u":
             conf['user'] = arg
+        elif opt in ("-v", "--version"):
+            version()
+            sys.exit(0)
 
     if len(args) != 1:
         usage()
@@ -149,7 +162,7 @@ def create_dataset(data_in, action, min_days, max_shade):
     idx_cur = 0
     idx_max = len(data_in) - 1
     if idx_max == -1:
-        sys.stderr.write('Warning: Empty input; not creating dataset\n')
+        sys.stderr.write("Warning: Empty input; not creating dataset\n")
         return ret
     random.seed()
 
