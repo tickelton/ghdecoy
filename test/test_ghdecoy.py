@@ -138,9 +138,6 @@ class GHDecoyMiscTests(unittest.TestCase):
         self.assertEqual(factor, 2)
 
     def test_get_factor_for_negative_value(self):
-        # FIXME: Maybe this should better check for an exception as negative
-        #        values should not occur and probably indicate an error
-        #        in some earlier piece of code.
         data = [
             {'date': '2015-01-01T12:00:00', 'count': -5},
         ]
@@ -155,33 +152,18 @@ class GHDecoyMiscTests(unittest.TestCase):
         self.assertEqual(data[0]['count'], 10)
 
     def test_cal_scale_empty_list(self):
-        # TODO: This should probably result in an error/exception.
-        #       On the other hand, an empty list is probably the expected result
-        #       here. Handling this case in create_dataset() is probably the
-        #       better idea.
         data = []
         ghdecoy.cal_scale(2, data)
         self.assertListEqual(data, [])
 
     def test_cal_scale_negative_value(self):
-        # NOTE: There shouldn't be any negative values in the input data of
-        #       cal_scale(). Though as this type of error should be caught in
-        #       get_factor(), scaling all values regardless of their sign is
-        #       the right thing to do for brevity's sake.
         data = [
             {'date': '2015-01-01T12:00:00', 'count': -5},
         ]
         ghdecoy.cal_scale(2, data)
         self.assertEqual(data[0]['count'], -10)
 
-    @unittest.expectedFailure
     def test_parse_args_help(self):
-        # FIXME: This should not fail.
-        #        The return code on -h/--help should be 0 as this is a valid
-        #        flag  and should be able to be used on it's own.
-        #        In practice the return code will be 1 as the presence of the
-        #        mandatory command (fill/append) is checked before the
-        #        individual flags are evaluated.
         with self.assertRaisesRegexp(SystemExit, '^0$'):
             ghdecoy.parse_args(['./ghdecoy.py', '-h'])
 
@@ -190,8 +172,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             ghdecoy.parse_args(['./ghdecoy.py', '-u', 'tickelton'])
 
     def test_parse_args_invalid_arg(self):
-        # TODO: Why is the return code not also 1 here?
-        with self.assertRaisesRegexp(SystemExit, '^2$'):
+        with self.assertRaisesRegexp(SystemExit, '^1$'):
             ghdecoy.parse_args(['./ghdecoy.py', '-x', 'fill'])
 
     def test_parse_args_invalid_shade(self):
@@ -284,7 +265,6 @@ class GHDecoyMiscTests(unittest.TestCase):
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_empty_input(self):
-        # TODO: Should probably throw an exception.
         data = []
         ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
         self.assertListEqual([], ret)
@@ -358,7 +338,6 @@ class GHDecoyMiscTests(unittest.TestCase):
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_empty_input(self):
-        # TODO: Should probably throw an exception.
         data = []
         ret = ghdecoy.create_dataset(data, 'append', 3, 4)
         self.assertListEqual([], ret)

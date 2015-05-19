@@ -55,7 +55,13 @@ def get_factor(data):
 
     max_val = 0
     for entry in data:
-        # FIXME: Maybe check for negative values here ?
+        if entry['count'] < 0:
+            sys.stderr.write(
+                'Warning: Found invalid value ({}) at {}.\n'.format(
+                    entry['count'], entry['date']
+                )
+            )
+            entry['count'] = 0
         if entry['count'] > max_val:
             max_val = entry['count']
 
@@ -70,9 +76,6 @@ def get_factor(data):
 def cal_scale(scale_factor, data_out):
     """Scales the calendar data by a given factor."""
 
-    # TODO: Check for empty list.
-    #       Or not. Maybe an empty list is fine here and create_dataset() should
-    #       Throw an exception in that case.
     for entry in data_out:
         entry['count'] *= scale_factor
 
@@ -84,10 +87,6 @@ def parse_args(argv):
         opts, args = getopt.getopt(argv[1:], "hknsd:m:r:p:u:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
-        usage()
-        sys.exit(2)
-
-    if len(args) != 1:
         usage()
         sys.exit(1)
 
@@ -101,11 +100,6 @@ def parse_args(argv):
         'user': os.getenv("USER"),
         'wdir': '/tmp'
     }
-    if args[0] in ("append", "fill"):
-        conf['action'] = args[0]
-    else:
-        print "Invalid command: {}".format(args[0])
-        sys.exit(1)
 
     for opt, arg in opts:
         if opt == "-d":
@@ -130,6 +124,16 @@ def parse_args(argv):
         elif opt == "-u":
             conf['user'] = arg
 
+    if len(args) != 1:
+        usage()
+        sys.exit(1)
+
+    if args[0] in ("append", "fill"):
+        conf['action'] = args[0]
+    else:
+        print "Invalid command: {}".format(args[0])
+        sys.exit(1)
+
     if not conf['user']:
         print "Could not determine username; please use -u"
         sys.exit(1)
@@ -144,6 +148,9 @@ def create_dataset(data_in, action, min_days, max_shade):
     idx_start = -1
     idx_cur = 0
     idx_max = len(data_in) - 1
+    if idx_max == -1:
+        sys.stderr.write('Warning: Empty input; not creating dataset\n')
+        return ret
     random.seed()
 
     if action == 'append':
