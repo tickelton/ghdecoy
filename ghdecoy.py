@@ -59,6 +59,16 @@ def get_calendar(user):
     return page.readlines()
 
 
+def calendar_valid(cal):
+    """Quick santiy check to see if the fetched calendar looks valid."""
+
+    if len(cal) < 495:
+        return False
+    if cal[0].startswith('<svg '):
+        return True
+    return False
+
+
 def get_factor(data):
     """Calculates the factor by which the calender data has to be scaled."""
 
@@ -154,6 +164,20 @@ def parse_args(argv):
     return conf
 
 
+def parse_calendar(cal):
+    """Parse the raw svg data into a dictionary."""
+
+    ret = []
+    for line in cal:
+        match = re.search(r'data-count="(\d+)".*data-date="(\d+-\d+-\d+)"',
+                          line)
+        if not match:
+            continue
+        ret.append({'date': match.group(2) + "T12:00:00",
+                    'count': int(match.group(1))})
+    return ret
+
+
 def create_dataset(data_in, action, min_days, max_shade):
     """Creates a data set representing the desired commits."""
 
@@ -231,10 +255,10 @@ def create_template(conf):
 
     if conf['ssh']:
         template = ''.join([template,
-            'git remote add origin git@github.com:{2}/$REPO.git\n'])
+                            'git remote add origin git@github.com:{2}/$REPO.git\n'])
     else:
         template = ''.join([template,
-            'git remote add origin https://github.com/{2}/$REPO.git\n'])
+                            'git remote add origin https://github.com/{2}/$REPO.git\n'])
 
     template = ''.join([template, 'set +e\ngit pull\nset -e\n'])
 
@@ -254,18 +278,14 @@ def main():
 
     cal = get_calendar(conf['user'])
     if not cal:
+        sys.stderr.write("Error: Unable to fetch calendar.\n")
+        sys.exit(1)
+    if not calendar_valid(cal):
+        sys.stderr.write("Error: That doesn't look like contribution data.\n"
+                         "Check user name and try again.\n")
         sys.exit(1)
 
-    data_in = []
-    for line in cal:
-        match = re.search(r'data-count="(\d+)".*data-date="(\d+-\d+-\d+)"',
-                          line)
-        if not match:
-            continue
-        data_in.append({'date': match.group(2) + "T12:00:00",
-                        'count': int(match.group(1))})
-
-    data_out = create_dataset(data_in, conf['action'],
+    data_out = create_dataset(parse_calendar(cal), conf['action'],
                               conf['min_days'], conf['max_shade'])
 
     create_script(conf, data_out, create_template(conf))
