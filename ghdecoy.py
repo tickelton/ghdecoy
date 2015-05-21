@@ -7,11 +7,11 @@
   -n           : just create the decoy repo but don't push it to github
   -s           : push over ssh instead of https
   -v|--version : print version information and exit
-  -d DIR       : directory to craft the the fake repository in
-  -m COUNT     : only fill gaps of at least COUNT days (default=5)
-  -r REPO      : use the repository REPO instead of the default 'decoy'
+  -d DIR       : directory to craft the the fake repository in (default: /tmp)
+  -m COUNT     : only fill gaps of at least COUNT days (default: 5)
+  -r REPO      : use the repository REPO (default: decoy)
   -p NUM       : sets the darkest shade of contribution 'pixels' to be
-                 created to NUM. Valid values are 1-4 (default=4).
+                 created to NUM. Valid values are 1-4 (default: 4).
   -u USER      : use the username USER instead of the current unix user
 
   CMD          : one of the following:
