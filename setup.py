@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 from distutils.core import setup, Command
+from distutils.command.install import install
 
 
 class RunTests(Command):
@@ -61,8 +63,20 @@ class CoverageReport(Command):
         subprocess.call(['coverage', 'report', '-m'])
 
 
+class GHDInstall(install):
+
+    user_options = install.user_options
+
+    def initialize_options(self):
+        install.initialize_options(self)
+
+    def run(self):
+        install.run(self)
+        install.copy_tree(self, './man', os.path.join(self.prefix, 'man'))
+
+
 setup(name='ghdecoy',
-      version='0.1.0',
+      version='0.2.0',
       description='Populate your github contribution graph',
       author='tickelton',
       author_email='tickelton@gmail.com',
@@ -73,5 +87,6 @@ setup(name='ghdecoy',
           'test': RunTests,
           'coverage_run': CoverageRun,
           'coverage_report': CoverageReport,
+          'install': GHDInstall,
       },
       )
