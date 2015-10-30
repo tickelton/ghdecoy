@@ -8,6 +8,7 @@
   -s           : push over ssh instead of https
   -v|--version : print version information and exit
   -d DIR       : directory to craft the the fake repository in (default: /tmp)
+  -l LANG      : make decoy repo look like language LANG
   -m COUNT     : only fill gaps of at least COUNT days (default: 5)
   -r REPO      : use the repository REPO (default: decoy)
   -p NUM       : sets the darkest shade of contribution 'pixels' to be
@@ -32,6 +33,149 @@ import subprocess
 import shutil
 
 __version__ = '0.2.0'
+
+content_templates = {
+    'raw': {
+        'ext': '',
+        'data': 'echo {1} > decoy',
+    },
+    'c': {
+        'ext': '.c',
+        'data': 'echo \'#include <stdio.h>\' > decoy.c\n' + \
+                'echo \'#include <stdlib.h>\' >> decoy.c\n' + \
+                'echo \'\' >> decoy.c\n' + \
+                'echo \'int main(void)\' >> decoy.c\n' + \
+                'echo \'{{\' >> decoy.c\n' + \
+                'echo \'  puts("Hello World{1}!");\' >> decoy.c\n' + \
+                'echo \'  return EXIT_SUCCESS;\' >> decoy.c\n' + \
+                'echo \'}}\' >> decoy.c\n',
+    },
+    'cpp': {
+        'ext': '.cpp',
+        'data': 'echo \'#include <iostream.h>\' > decoy.cpp\n' + \
+                'echo \'\' >> decoy.cpp\n' + \
+                'echo \'main()\' >> decoy.cpp\n' + \
+                'echo \'{{\' >> decoy.cpp\n' + \
+                'echo \'    cout << "Hello World{1}!" << endl;\' >> decoy.cpp\n' + \
+                'echo \'    return 0;\' >> decoy.cpp\n' + \
+                'echo \'}}\' >> decoy.cpp\n',
+    },
+    'csharp': {
+        'ext': '.cs',
+        'data': 'echo \'using System;\' > decoy.cs\n' + \
+                'echo \'\' >> decoy.cs\n' + \
+                'echo \'class Program\' >> decoy.cs\n' + \
+                'echo \'{{\' >> decoy.cs\n' + \
+                'echo \'    static void Main()\' >> decoy.cs\n' + \
+                'echo \'    {{\' >> decoy.cs\n' + \
+                'echo \'        Console.WriteLine("Hello, world{1}!");\' >> decoy.cs\n' + \
+                'echo \'    }}\' >> decoy.cs\n' + \
+                'echo \'}}\' >> decoy.cs\n',
+    },
+    'css': {
+        'ext': '.css',
+        'data': 'echo \'body:before {{\' > decoy.css\n' + \
+                'echo \'    content: "Hello World{1}";\' >> decoy.css\n' + \
+                'echo \'}}\' >> decoy.css\n',
+    },
+    'go': {
+        'ext': '.go',
+        'data': 'echo \'package main\' > decoy.go\n' + \
+                'echo \'import "fmt"\' >> decoy.go\n' + \
+                'echo \'func main() {{\' >> decoy.go\n' + \
+                'echo \' fmt.Printf("Hello World{1}")\' >> decoy.go\n' + \
+                'echo \'}}\' >> decoy.go\n',
+    },
+    'html': {
+        'ext': '.html',
+        'data': 'echo \'<HTML>\' > decoy.html\n' + \
+                'echo \'<!-- Hello World in HTML -->\' >> decoy.html\n' + \
+                'echo \'<HEAD>\' >> decoy.html\n' + \
+                'echo \'<TITLE>Hello World{1}!</TITLE>\' >> decoy.html\n' + \
+                'echo \'</HEAD>\' >> decoy.html\n' + \
+                'echo \'<BODY>\' >> decoy.html\n' + \
+                'echo \'Hello World!\' >> decoy.html\n' + \
+                'echo \'</BODY>\' >> decoy.html\n' + \
+                'echo \'</HTML>\' >> decoy.html\n',
+    },
+    'java': {
+        'ext': '.java',
+        'data': 'echo \'public class HelloWorld {{\' > decoy.java\n' + \
+                'echo \'\' >> decoy.java\n' + \
+                'echo \'    public static void main(String[] args) {{\' >> decoy.java\n' + \
+                'echo \'        // Prints "Hello, World" to the terminal window.\' >> decoy.java\n' + \
+                'echo \'        System.out.println("Hello, World{1}");\' >> decoy.java\n' + \
+                'echo \'    }}\' >> decoy.java\n' + \
+                'echo \'\' >> decoy.java\n' + \
+                'echo \'}}\' >> decoy.java\n',
+    },
+    'javascript': {
+        'ext': '.js',
+        'data': 'echo \'function factorial{1}(n) {{\' > decoy.js\n' + \
+                'echo \'    if (n == 0) {{\' >> decoy.js\n' + \
+                'echo \'        return 1;\' >> decoy.js\n' + \
+                'echo \'    }}\' >> decoy.js\n' + \
+                'echo \'    return n * factorial(n - 1);\' >> decoy.js\n' + \
+                'echo \'}}\' >> decoy.js\n',
+    },
+    'nasm': {
+        'ext': '.asm',
+        'data': 'echo \'        SECTION .data\' > decoy.asm\n' + \
+                'echo \'\' >> decoy.asm\n' + \
+                'echo \'        msg db "Hello, world{1}!",0xa ; \' >> decoy.asm\n' + \
+                'echo \'        len equ $ - msg\' >> decoy.asm\n' + \
+                'echo \'\' >> decoy.asm\n' + \
+                'echo \'        SECTION .text\' >> decoy.asm\n' + \
+                'echo \'        global main\' >> decoy.asm\n' + \
+                'echo \'\' >> decoy.asm\n' + \
+                'echo \'main:\' >> decoy.asm\n' + \
+                'echo \'        mov     eax,4\' >> decoy.asm\n' + \
+                'echo \'        mov     ebx,1\' >> decoy.asm\n' + \
+                'echo \'        mov     ecx,msg\' >> decoy.asm\n' + \
+                'echo \'        mov     edx,len\' >> decoy.asm\n' + \
+                'echo \'        int     0x80\' >> decoy.asm\n' + \
+                'echo \'\' >> decoy.asm\n' + \
+                'echo \'        mov     eax,1\' >> decoy.asm\n' + \
+                'echo \'        mov     ebx,0\' >> decoy.asm\n' + \
+                'echo \'        int     0x80\' >> decoy.asm\n',
+    },
+    'perl': {
+        'ext': '.pl',
+        'data': 'echo \'#!/usr/bin/env perl\' > decoy.pl\n' + \
+                'echo \'\' >> decoy.pl\n' + \
+                'echo \'use warnings;\' >> decoy.pl\n' + \
+                'echo \'use strict;\' >> decoy.pl\n' + \
+                'echo \'\' >> decoy.pl\n' + \
+                'echo \'print "Hello World{1}!";\' >> decoy.pl\n',
+    },
+    'php': {
+        'ext': '.php',
+        'data': 'echo \'<?php\' > decoy.php\n' + \
+                'echo \'echo "Hello World{1}!";\' >> decoy.php\n' + \
+                'echo \'?>  \' >> decoy.php\n',
+    },
+    'python': {
+        'ext': '.py',
+        'data': 'echo \'#!/usr/bin/env/python\' > decoy.py\n' + \
+                'echo \'print "Hello World {1}"\' >> decoy.py',
+    },
+    'ruby': {
+        'ext': '.rb',
+        'data': 'echo \'class HelloWorld\' > decoy.rb\n' + \
+                'echo \'   def initialize(name)\' >> decoy.rb\n' + \
+                'echo \'      @name = name.capitalize\' >> decoy.rb\n' + \
+                'echo \'   end\' >> decoy.rb\n' + \
+                'echo \'   def speak\' >> decoy.rb\n' + \
+                'echo \'      puts "Hello #{{@name}}{1}!"\' >> decoy.rb\n' + \
+                'echo \'   end\' >> decoy.rb\n' + \
+                'echo \'end\' >> decoy.rb\n' + \
+                'echo \'\' >> decoy.rb\n' + \
+                'echo \'hello = HelloWorld.new("World")\' >> decoy.rb\n' + \
+                'echo \'hello.speak\' >> decoy.rb\n',
+    }
+}
+
+known_languages = content_templates.keys()
 
 
 def usage():
@@ -99,12 +243,18 @@ def cal_scale(scale_factor, data_out):
         entry['count'] *= scale_factor
 
 
+def lang_valid(lang):
+    if lang in known_languages:
+        return True
+    return False
+
+
 def parse_args(argv):
     """Parses the script's arguments via getopt."""
 
     try:
         opts, args = getopt.getopt(
-            argv[1:], "hknsvd:m:r:p:u:", ["help", "version"])
+            argv[1:], "fhknsvd:l:m:r:p:u:", ["help", "version"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -112,7 +262,9 @@ def parse_args(argv):
 
     conf = {
         'dryrun': False,
+        'force_data': False,
         'keep': False,
+        'lang': 'raw',
         'max_shade': 4,
         'min_days': 5,
         'repo': 'decoy',
@@ -127,8 +279,12 @@ def parse_args(argv):
         elif opt in ("-h", "--help"):
             usage()
             sys.exit(0)
+        elif opt == "-f":
+            conf['force_data'] = True
         elif opt == "-k":
             conf['keep'] = True
+        elif opt == "-l":
+            conf['lang'] = arg
         elif opt == "-m":
             conf['min_days'] = int(arg)
         elif opt == "-n":
@@ -149,6 +305,10 @@ def parse_args(argv):
 
     if len(args) != 1:
         usage()
+        sys.exit(1)
+
+    if not lang_valid(conf['lang']):
+        print "Invalid language: {}".format(conf['lang'])
         sys.exit(1)
 
     if args[0] in ("append", "fill"):
@@ -178,7 +338,7 @@ def parse_calendar(cal):
     return ret
 
 
-def create_dataset(data_in, action, min_days, max_shade):
+def create_dataset(data_in, action, min_days, max_shade, force):
     """Creates a data set representing the desired commits."""
 
     ret = []
@@ -190,34 +350,45 @@ def create_dataset(data_in, action, min_days, max_shade):
         return ret
     random.seed()
 
-    if action == 'append':
-        idx_cur = idx_max
-        for entry in reversed(data_in):
-            if entry['count']:
-                break
-            idx_cur -= 1
-
-    # NOTE: This won't fill the last day if it is not preceded by at least one
-    # other empty day. Doesn't matter though, as we're only filling blocks of
-    # at least three continuous empty days.
-    for entry in data_in[idx_cur:]:
-        if entry['count'] or idx_cur == idx_max:
-            if idx_start > -1:
-                idx_range = range(idx_start,
-                                  idx_cur if entry['count'] else idx_cur + 1)
-                idx_start = -1
-                if len(idx_range) < min_days:
-                    idx_cur += 1
-                    continue
-                for i in idx_range:
-                    ret.append({'date': data_in[i]['date'],
+    if force:
+        for i in range(0, idx_max):
+            ret.append({'date': data_in[i]['date'],
                                 'count': random.randint(0, max_shade)})
-        elif idx_start == -1:
-            idx_start = idx_cur
-        idx_cur += 1
+    else:
+        if action == 'append':
+            idx_cur = idx_max
+            for entry in reversed(data_in):
+                if entry['count']:
+                    break
+                idx_cur -= 1
+
+        # NOTE: This won't fill the last day if it is not preceded by at least one
+        # other empty day. Doesn't matter though, as we're only filling blocks of
+        # at least three continuous empty days.
+        for entry in data_in[idx_cur:]:
+            if entry['count'] or idx_cur == idx_max:
+                if idx_start > -1:
+                    idx_range = range(idx_start,
+                                      idx_cur if entry['count'] else idx_cur + 1)
+                    idx_start = -1
+                    if len(idx_range) < min_days:
+                        idx_cur += 1
+                        continue
+                    for i in idx_range:
+                        ret.append({'date': data_in[i]['date'],
+                                    'count': random.randint(0, max_shade)})
+            elif idx_start == -1:
+                idx_start = idx_cur
+            idx_cur += 1
 
     cal_scale(get_factor(data_in), ret)
     return ret
+
+
+def get_content_template(lang):
+    git_cmd = '\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'
+
+    return content_templates[lang]['data'] + git_cmd
 
 
 def create_script(conf, data_out, template):
@@ -227,16 +398,18 @@ def create_script(conf, data_out, template):
     it with commits as specified via it's arguments and pushes it to github.
     """
 
+    content_template = get_content_template(conf['lang'])
     fake_commits = []
+    j = 0
     for entry in data_out:
         for i in range(entry['count']):
             fake_commits.append(
-                'echo {1} >> decoy\nGIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={0} git commit -a -m "ghdecoy" > /dev/null\n'.format(
-                    entry['date'], i))
+                content_template.format(entry['date'], j))
+            j += 1
     script_name = ''.join([conf['wdir'], '/ghdecoy.sh'])
     script_fo = open(script_name, "w")
     script_fo.write(
-        template.format(conf['repo'], ''.join(fake_commits), conf['user']))
+        template.format(conf['repo'], content_templates[conf['lang']]['ext'], ''.join(fake_commits) ,conf['user']))
     script_fo.close()
 
 
@@ -248,17 +421,17 @@ def create_template(conf):
         'REPO={0}\n'
         'git init $REPO\n'
         'cd $REPO\n'
-        'touch decoy\n'
-        'git add decoy\n'
-        '{1}\n'
+        'touch decoy{1}\n'
+        'git add decoy{1}\n'
+        '{2}\n'
     )
 
     if conf['ssh']:
         template = ''.join([template,
-                            'git remote add origin git@github.com:{2}/$REPO.git\n'])
+                            'git remote add origin git@github.com:{3}/$REPO.git\n'])
     else:
         template = ''.join([template,
-                            'git remote add origin https://github.com/{2}/$REPO.git\n'])
+                            'git remote add origin https://github.com/{3}/$REPO.git\n'])
 
     template = ''.join([template, 'set +e\ngit pull\nset -e\n'])
 
@@ -286,7 +459,8 @@ def main():
         sys.exit(1)
 
     data_out = create_dataset(parse_calendar(cal), conf['action'],
-                              conf['min_days'], conf['max_shade'])
+                              conf['min_days'], conf['max_shade'],
+                              conf['force_data'])
 
     create_script(conf, data_out, create_template(conf))
 
