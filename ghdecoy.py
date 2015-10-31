@@ -109,7 +109,7 @@ content_templates = {
                 'echo \'\' >> decoy.java\n' + \
                 'echo \'}}\' >> decoy.java\n',
     },
-    'javascript': {
+    'jscript': {
         'ext': '.js',
         'data': 'echo \'function factorial{1}(n) {{\' > decoy.js\n' + \
                 'echo \'    if (n == 0) {{\' >> decoy.js\n' + \
@@ -254,7 +254,7 @@ def parse_args(argv):
 
     try:
         opts, args = getopt.getopt(
-            argv[1:], "fhknsvd:l:m:r:p:u:", ["help", "version"])
+            argv[1:], "fhknsvd:l:m:p:r:u:", ["help", "version"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
