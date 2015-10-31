@@ -18,6 +18,7 @@ class GHDecoyIOTests(unittest.TestCase):
 
     def test_create_script(self):
         conf = {
+            'lang': 'raw',
             'dryrun': False,
             'wdir': '/tmp',
             'min_days': 1,
@@ -40,10 +41,10 @@ class GHDecoyIOTests(unittest.TestCase):
             'REPO={0}\n'
             'git init $REPO\n'
             'cd $REPO\n'
-            'touch decoy\n'
-            'git add decoy\n'
-            '{1}\n'
-            'git remote add origin git@github.com:{2}/$REPO.git\n'
+            'touch decoy{1}\n'
+            'git add decoy{1}\n'
+            '{2}\n'
+            'git remote add origin git@github.com:{3}/$REPO.git\n'
             'set +e\n'
             'git pull\n'
             'set -e\n'
@@ -57,25 +58,25 @@ class GHDecoyIOTests(unittest.TestCase):
             'cd $REPO\n',
             'touch decoy\n',
             'git add decoy\n',
-            'echo 0 >> decoy\n',
+            'echo 0 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-01T12:00:00 GIT_COMMITTER_DATE=2015-01-01T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 0 >> decoy\n',
+            'echo 1 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-02T12:00:00 GIT_COMMITTER_DATE=2015-01-02T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 1 >> decoy\n',
+            'echo 2 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-02T12:00:00 GIT_COMMITTER_DATE=2015-01-02T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 0 >> decoy\n',
+            'echo 3 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 1 >> decoy\n',
+            'echo 4 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 2 >> decoy\n',
+            'echo 5 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-03T12:00:00 GIT_COMMITTER_DATE=2015-01-03T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 0 >> decoy\n',
+            'echo 6 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 1 >> decoy\n',
+            'echo 7 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 2 >> decoy\n',
+            'echo 8 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
-            'echo 3 >> decoy\n',
+            'echo 9 > decoy\n',
             'GIT_AUTHOR_DATE=2015-01-04T12:00:00 GIT_COMMITTER_DATE=2015-01-04T12:00:00 git commit -a -m "ghdecoy" > /dev/null\n',
             '\n',
             'git remote add origin git@github.com:tickelton/$REPO.git\n',
@@ -243,7 +244,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[2])
@@ -256,7 +257,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertDictContainsSubset({'date': '2015-01-01T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[2])
@@ -269,7 +270,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -282,7 +283,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 1, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 1, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_gap_to_small(self):
@@ -293,12 +294,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_no_gap(self):
@@ -309,7 +310,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_center(self):
@@ -320,7 +321,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_start(self):
@@ -331,7 +332,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_end(self):
@@ -342,7 +343,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -355,7 +356,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 1, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 1, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_gap_to_small(self):
@@ -366,12 +367,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_no_gap(self):
@@ -382,7 +383,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
         self.assertListEqual([], ret)
 
     def test_create_template_https_wet(self):
@@ -396,10 +397,10 @@ class GHDecoyMiscTests(unittest.TestCase):
             'REPO={0}\n'
             'git init $REPO\n'
             'cd $REPO\n'
-            'touch decoy\n'
-            'git add decoy\n'
-            '{1}\n'
-            'git remote add origin https://github.com/{2}/$REPO.git\n'
+            'touch decoy{1}\n'
+            'git add decoy{1}\n'
+            '{2}\n'
+            'git remote add origin https://github.com/{3}/$REPO.git\n'
             'set +e\n'
             'git pull\n'
             'set -e\n'
@@ -419,10 +420,10 @@ class GHDecoyMiscTests(unittest.TestCase):
             'REPO={0}\n'
             'git init $REPO\n'
             'cd $REPO\n'
-            'touch decoy\n'
-            'git add decoy\n'
-            '{1}\n'
-            'git remote add origin git@github.com:{2}/$REPO.git\n'
+            'touch decoy{1}\n'
+            'git add decoy{1}\n'
+            '{2}\n'
+            'git remote add origin git@github.com:{3}/$REPO.git\n'
             'set +e\n'
             'git pull\n'
             'set -e\n'
