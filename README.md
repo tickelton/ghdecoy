@@ -10,6 +10,11 @@ in way so that when it is pushed to github periods in the contribution
 calendar containing no commits will be filled with a random pattern so your
 account looks sufficiently active.
 
+Demo
+------------
+There are some demo repositories at [ttn-dcy](https://github.com/ttn-dcy)
+where you can see what ghdecoy can do for you.
+
 Dependencies
 ------------
 
@@ -44,5 +49,5 @@ Currently the following two modes are supported:
 EXAMPLE
 -------
 ```shell
-python ghdecoy.sh -u tickelton append
+python ghdecoy.py -u tickelton append
 ```
