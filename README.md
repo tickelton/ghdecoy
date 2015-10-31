@@ -49,5 +49,5 @@ Currently the following two modes are supported:
 EXAMPLE
 -------
 ```shell
-python ghdecoy.sh -u tickelton append
+python ghdecoy.py -u tickelton append
 ```
