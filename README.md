@@ -1,6 +1,8 @@
 ghdecoy
 =======
 
+[![Join the chat at https://gitter.im/tickelton/ghdecoy](https://badges.gitter.im/tickelton/ghdecoy.svg)](https://gitter.im/tickelton/ghdecoy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ghdecoy is a tool to vandali^H optimize the github contributions calendar. 
 It is inspired by [gitfiti](https://github.com/gelstudios/gitfiti) but
 with a different use case in mind.
