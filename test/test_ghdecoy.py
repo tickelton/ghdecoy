@@ -192,6 +192,10 @@ class GHDecoyMiscTests(unittest.TestCase):
         with self.assertRaisesRegexp(SystemExit, '^1$'):
             ghdecoy.parse_args(['./ghdecoy.py', 'foo'])
 
+    def test_parse_args_invalid_language(self):
+        with self.assertRaisesRegexp(SystemExit, '^1$'):
+            ghdecoy.parse_args(['./ghdecoy.py', '-l', 'foobar', 'fill'])
+
     def test_parse_args_invalid_shade(self):
         conf = ghdecoy.parse_args(['./ghdecoy.py', '-p', '99', 'fill'])
         self.assertEqual(conf['max_shade'], 4)
@@ -200,10 +204,12 @@ class GHDecoyMiscTests(unittest.TestCase):
         conf = ghdecoy.parse_args(
             [
                 './ghdecoy.py',
+                '-f',
                 '-k',
                 '-n',
                 '-s',
                 '-d', '/fake/dir',
+                '-l', 'python',
                 '-m', '99',
                 '-r', 'testrepo',
                 '-p', '2',
@@ -212,8 +218,10 @@ class GHDecoyMiscTests(unittest.TestCase):
             ]
         )
         self.assertTrue(conf['dryrun'])
+        self.assertTrue(conf['force_data'])
         self.assertTrue(conf['keep'])
         self.assertEqual(conf['wdir'], '/fake/dir')
+        self.assertEqual(conf['lang'], 'python')
         self.assertEqual(conf['min_days'], 99)
         self.assertEqual(conf['repo'], 'testrepo')
         self.assertEqual(conf['max_shade'], 2)
@@ -1006,6 +1014,12 @@ class GHDecoyMiscTests(unittest.TestCase):
     def test_calendar_valid_empty_data(self):
         cal = []
         self.assertFalse(ghdecoy.calendar_valid(cal))
+
+    def test_lang_valid_true(self):
+        self.assertTrue(ghdecoy.lang_valid('python'))
+
+    def test_lang_valid_false(self):
+        self.assertFalse(ghdecoy.lang_valid('clojure'))
 
 
 if __name__ == '__main__':
