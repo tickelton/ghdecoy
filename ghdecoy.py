@@ -264,7 +264,7 @@ def parse_args(argv):
         'dryrun': False,
         'force_data': False,
         'keep': False,
-        'lang': 'raw',
+        'lang': 'python',
         'max_shade': 4,
         'min_days': 5,
         'repo': 'decoy',
