@@ -20,6 +20,8 @@
                           days without commits with random noise
                  append : same as fill, but only fills the blank space
                           after the last existing commit
+                 DATE[-DATE][,...] : fill only the given date(s). Overrides
+                          '-m'. See man page for examples.
 """
 
 import getopt
