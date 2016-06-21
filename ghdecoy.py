@@ -33,6 +33,7 @@ import random
 import math
 import subprocess
 import shutil
+import datetime
 
 __version__ = '0.3.0'
 
@@ -250,6 +251,32 @@ def lang_valid(lang):
         return True
     return False
 
+def parse_timeframe_arg(frame, conf):
+    intervals = []
+    singledates = []
+    dates = frame.split(',')
+    for d in dates:
+        interval = d.split('-')
+        if interval[0] != d:
+            try:
+                intervals.append([datetime.datetime.strptime(interval[0],"%Y%m%d"),
+                    datetime.datetime.strptime(interval[1],"%Y%m%d")])
+            except ValueError:
+                print "Invalid value: {}".format(d)
+                return False
+        else:
+            try:
+                singledates.append(datetime.datetime.strptime(d,"%Y%m%d"))
+            except ValueError:
+                print "Invalid value: {}".format(d)
+                return False
+
+    conf['timeframe'] = {
+        'intervals': intervals,
+        'singledates': singledates,
+    }
+
+    return True
 
 def parse_args(argv):
     """Parses the script's arguments via getopt."""
@@ -315,6 +342,8 @@ def parse_args(argv):
 
     if args[0] in ("append", "fill"):
         conf['action'] = args[0]
+    elif parse_timeframe_arg(args[0], conf) == True:
+        conf['action'] = "timeframe"
     else:
         print "Invalid command: {}".format(args[0])
         sys.exit(1)

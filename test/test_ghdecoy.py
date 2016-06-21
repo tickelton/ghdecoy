@@ -1021,6 +1021,53 @@ class GHDecoyMiscTests(unittest.TestCase):
     def test_lang_valid_false(self):
         self.assertFalse(ghdecoy.lang_valid('clojure'))
 
+    def test_parse_timeframe_arg_invalid_arg(self):
+        conf = {}
+        self.assertFalse(ghdecoy.parse_timeframe_arg('foo', conf))
+
+    def test_parse_timeframe_arg_one_single_date(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg('20160301', conf))
+
+    def test_parse_timeframe_arg_multiple_single_dates(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160301,20161224', conf))
+
+    def test_parse_timeframe_arg_one_interval(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160305-20160307', conf))
+
+    def test_parse_timeframe_arg_multiple_intervals(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160202-20160205,20160321-20160322', conf))
+
+    def test_parse_timeframe_arg_one_single_date_one_interval(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160101,20160710-20160712', conf))
+
+    def test_parse_timeframe_arg_multiple_single_dates_and_intervals(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20161101,19950307-19950309,20110303,19870912-19870913', conf))
+
+    def test_parse_timeframe_arg_invalid_date_in_interval(self):
+        conf = {}
+        self.assertFalse(ghdecoy.parse_timeframe_arg(
+            '20150301-foo', conf))
+
+    def test_parse_timeframe_arg_invalid_across_month_boundaries(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '19990330-19990402', conf))
+
+    def test_parse_timeframe_arg_invalid_across_year_boundaries(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '19991231-20000102', conf))
 
 if __name__ == '__main__':
     unittest.main(buffer=True)
