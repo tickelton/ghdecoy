@@ -1025,6 +1025,7 @@ class GHDecoyMiscTests(unittest.TestCase):
         conf = {}
         self.assertFalse(ghdecoy.parse_timeframe_arg('foo', conf))
 
+    # TODO: verify returned structure
     def test_parse_timeframe_arg_one_single_date(self):
         conf = {}
         self.assertTrue(ghdecoy.parse_timeframe_arg('20160301', conf))
