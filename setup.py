@@ -37,7 +37,7 @@ class CoverageRun(Command):
     def run(self):
         import subprocess
         subprocess.call([
-            'coverage',
+            'python-coverage',
             'run',
             '-m',
             'unittest',
@@ -60,7 +60,7 @@ class CoverageReport(Command):
 
     def run(self):
         import subprocess
-        subprocess.call(['coverage', 'report', '-m'])
+        subprocess.call(['python-coverage', 'report', '-m'])
 
 
 class GHDInstall(install):
