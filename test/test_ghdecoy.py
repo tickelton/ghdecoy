@@ -1,6 +1,7 @@
 import unittest
 import ghdecoy
 import os
+import datetime
 
 
 class GHDecoyOnlineTests(unittest.TestCase):
@@ -228,6 +229,15 @@ class GHDecoyMiscTests(unittest.TestCase):
         self.assertEqual(conf['user'], 'testuser')
         self.assertEqual(conf['action'], 'append')
 
+    def test_parse_args_timeframe(self):
+        conf = ghdecoy.parse_args(
+            [
+                './ghdecoy.py',
+                '20130911',
+            ]
+        )
+        self.assertEqual(conf['action'], 'timeframe')
+
     def test_parse_calendar(self):
         data = ['<svg width="721" height="110" class="js-calendar-graph-svg">',
                 '<g transform="translate(20, 20)">',
@@ -252,7 +262,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[2])
@@ -265,7 +275,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertDictContainsSubset({'date': '2015-01-01T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[2])
@@ -278,7 +288,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -291,7 +301,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 1, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 1, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_gap_to_small(self):
@@ -302,12 +312,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_no_gap(self):
@@ -318,7 +328,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_center(self):
@@ -329,7 +339,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_start(self):
@@ -340,7 +350,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_end(self):
@@ -351,7 +361,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -364,7 +374,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 1, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 1, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_gap_to_small(self):
@@ -375,12 +385,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_no_gap(self):
@@ -391,7 +401,48 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False)
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        self.assertListEqual([], ret)
+
+    def test_create_dataset_timeframe_single(self):
+        data = [
+            {'date': '2016-11-01T12:00:00', 'count': 0},
+        ]
+        ret = ghdecoy.create_dataset(data, 'timeframe', 3, 4, False, {
+            'singledates': [
+                datetime.datetime(2016, 11, 1, 12, 0)
+            ],
+            'intervals': []
+        })
+        self.assertDictContainsSubset({'date': '2016-11-01T12:00:00'}, ret[0])
+
+    def test_create_dataset_timeframe_interval(self):
+        data = [
+            {'date': '2005-03-06T12:00:00', 'count': 0},
+            {'date': '2005-03-07T12:00:00', 'count': 0},
+            {'date': '2005-03-08T12:00:00', 'count': 0},
+            {'date': '2005-03-09T12:00:00', 'count': 0},
+            {'date': '2005-03-10T12:00:00', 'count': 0},
+        ]
+        ret = ghdecoy.create_dataset(data, 'timeframe', 3, 4, False, {
+            'singledates': [],
+            'intervals': [[
+                datetime.datetime(2005, 3, 7, 12, 0),
+                datetime.datetime(2005, 3, 9, 12, 0)
+            ]]
+        })
+        self.assertDictContainsSubset({'date': '2005-03-09T12:00:00'}, ret[0])
+        self.assertDictContainsSubset({'date': '2005-03-08T12:00:00'}, ret[1])
+        self.assertDictContainsSubset({'date': '2005-03-07T12:00:00'}, ret[2])
+
+    def test_create_dataset_timeframe_empty(self):
+        data = [
+            {'date': '2005-03-10T12:00:00', 'count': 0},
+        ]
+        ret = ghdecoy.create_dataset(data, 'timeframe', 3, 4, False, {
+            'singledates': [],
+            'intervals': []
+        })
         self.assertListEqual([], ret)
 
     def test_create_template_https_wet(self):
@@ -1021,6 +1072,116 @@ class GHDecoyMiscTests(unittest.TestCase):
     def test_lang_valid_false(self):
         self.assertFalse(ghdecoy.lang_valid('clojure'))
 
+    def test_parse_timeframe_arg_invalid_arg(self):
+        conf = {}
+        self.assertFalse(ghdecoy.parse_timeframe_arg('foo', conf))
+
+    def test_parse_timeframe_arg_one_single_date(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg('20160301', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [datetime.datetime(2016, 3, 1, 12, 0)],
+            'intervals': []
+        }})
+
+    def test_parse_timeframe_arg_multiple_single_dates(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160301,20161224', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [
+                datetime.datetime(2016, 3, 1, 12, 0),
+                datetime.datetime(2016, 12, 24, 12, 0),
+            ],
+            'intervals': []
+        }})
+
+    def test_parse_timeframe_arg_one_interval(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160305-20160307', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [],
+            'intervals': [[
+                datetime.datetime(2016, 3, 5, 12, 0),
+                datetime.datetime(2016, 3, 7, 12, 0)
+            ]]
+        }})
+
+    def test_parse_timeframe_arg_multiple_intervals(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160202-20160205,20160321-20160322', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [],
+            'intervals': [[
+                datetime.datetime(2016, 2, 2, 12, 0),
+                datetime.datetime(2016, 2, 5, 12, 0)
+            ],[
+                datetime.datetime(2016, 3, 21, 12, 0),
+                datetime.datetime(2016, 3, 22, 12, 0)
+            ]]
+        }})
+
+    def test_parse_timeframe_arg_one_single_date_one_interval(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20160101,20160710-20160712', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [datetime.datetime(2016, 1, 1, 12, 0)],
+            'intervals': [[
+                datetime.datetime(2016, 7, 10, 12, 0),
+                datetime.datetime(2016, 7, 12, 12, 0)
+            ]]
+        }})
+
+    def test_parse_timeframe_arg_multiple_single_dates_and_intervals(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '20161101,19950307-19950309,20110303,19870912-19870913', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [
+                datetime.datetime(2016, 11, 1, 12, 0),
+                datetime.datetime(2011, 3, 3, 12, 0)
+            ],
+            'intervals': [[
+                datetime.datetime(1995, 3, 7, 12, 0),
+                datetime.datetime(1995, 3, 9, 12, 0)
+            ],[
+                datetime.datetime(1987, 9, 12, 12, 0),
+                datetime.datetime(1987, 9, 13, 12, 0)
+            ]]
+        }})
+
+    def test_parse_timeframe_arg_invalid_date_in_interval(self):
+        conf = {}
+        self.assertFalse(ghdecoy.parse_timeframe_arg(
+            '20150301-20150332', conf))
+        self.assertDictEqual(conf, {})
+
+    def test_parse_timeframe_arg_across_month_boundaries(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '19990330-19990402', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [],
+            'intervals': [[
+                datetime.datetime(1999, 3, 30, 12, 0),
+                datetime.datetime(1999, 4, 2, 12, 0)
+            ]]
+        }})
+
+    def test_parse_timeframe_arg_across_year_boundaries(self):
+        conf = {}
+        self.assertTrue(ghdecoy.parse_timeframe_arg(
+            '19991231-20000102', conf))
+        self.assertDictEqual(conf, {'timeframe': {
+            'singledates': [],
+            'intervals': [[
+                datetime.datetime(1999, 12, 31, 12, 0),
+                datetime.datetime(2000, 1, 2, 12, 0)
+            ]]
+        }})
 
 if __name__ == '__main__':
     unittest.main(buffer=True)

@@ -20,6 +20,8 @@
                           days without commits with random noise
                  append : same as fill, but only fills the blank space
                           after the last existing commit
+                 DATE[-DATE][,...] : fill only the given date(s). Overrides
+                          '-m'. See man page for examples.
 """
 
 import getopt
@@ -31,6 +33,7 @@ import random
 import math
 import subprocess
 import shutil
+from datetime import datetime, timedelta
 
 __version__ = '0.3.0'
 
@@ -248,6 +251,36 @@ def lang_valid(lang):
         return True
     return False
 
+def parse_timeframe_arg(frame, conf):
+    intervals = []
+    singledates = []
+    dates = frame.split(',')
+    for d in dates:
+        interval = d.split('-')
+        if interval[0] != d:
+            try:
+                intervals.append(
+                    [datetime.strptime(interval[0],"%Y%m%d") +
+                        timedelta(hours=12),
+                    datetime.strptime(interval[1],"%Y%m%d") +
+                        timedelta(hours=12)])
+            except ValueError:
+                print "Invalid value: {}".format(d)
+                return False
+        else:
+            try:
+                singledates.append(datetime.strptime(d,"%Y%m%d") +
+                                   timedelta(hours=12))
+            except ValueError:
+                print "Invalid value: {}".format(d)
+                return False
+
+    conf['timeframe'] = {
+        'intervals': intervals,
+        'singledates': singledates,
+    }
+
+    return True
 
 def parse_args(argv):
     """Parses the script's arguments via getopt."""
@@ -269,6 +302,7 @@ def parse_args(argv):
         'min_days': 5,
         'repo': 'decoy',
         'ssh': False,
+        'timeframe': {},
         'user': os.getenv("USER"),
         'wdir': '/tmp'
     }
@@ -313,6 +347,8 @@ def parse_args(argv):
 
     if args[0] in ("append", "fill"):
         conf['action'] = args[0]
+    elif parse_timeframe_arg(args[0], conf) == True:
+        conf['action'] = "timeframe"
     else:
         print "Invalid command: {}".format(args[0])
         sys.exit(1)
@@ -338,7 +374,7 @@ def parse_calendar(cal):
     return ret
 
 
-def create_dataset(data_in, action, min_days, max_shade, force):
+def create_dataset(data_in, action, min_days, max_shade, force, timeframe):
     """Creates a data set representing the desired commits."""
 
     ret = []
@@ -354,6 +390,25 @@ def create_dataset(data_in, action, min_days, max_shade, force):
         for i in range(0, idx_max):
             ret.append({'date': data_in[i]['date'],
                                 'count': random.randint(0, max_shade)})
+    elif action == 'timeframe':
+        for in_date in timeframe['singledates']:
+            in_iso = format(in_date.isoformat())
+            for cal_date in data_in:
+                if cal_date['date'] == in_iso:
+                    ret.append({'date': cal_date['date'],
+                        'count': random.randint(0, max_shade)})
+
+        for in_interval in timeframe['intervals']:
+            diff_days = (in_interval[1] - in_interval[0]).days
+            while diff_days >= 0:
+                in_iso = (in_interval[0] + timedelta(days=diff_days)).isoformat()
+
+                for cal_date in data_in:
+                    if cal_date['date'] == in_iso:
+                        ret.append({'date': cal_date['date'],
+                            'count': random.randint(0, max_shade)})
+
+                diff_days -= 1
     else:
         if action == 'append':
             idx_cur = idx_max
@@ -447,8 +502,6 @@ def main():
     conf = parse_args(sys.argv)
     ret = 0
 
-    print "{} {} {}".format(conf['user'], conf['repo'], conf['action'])
-
     cal = get_calendar(conf['user'])
     if not cal:
         sys.stderr.write("Error: Unable to fetch calendar.\n")
@@ -460,7 +513,10 @@ def main():
 
     data_out = create_dataset(parse_calendar(cal), conf['action'],
                               conf['min_days'], conf['max_shade'],
-                              conf['force_data'])
+                              conf['force_data'], conf['timeframe'])
+    if not data_out:
+        print "No commits to be pushed."
+        sys.exit(ret)
 
     create_script(conf, data_out, create_template(conf))
 
