@@ -76,7 +76,7 @@ class GHDInstall(install):
 
 
 setup(name='ghdecoy',
-      version='0.3.0',
+      version='0.4.0',
       description='Populate your github contribution graph',
       author='tickelton',
       author_email='tickelton@gmail.com',
