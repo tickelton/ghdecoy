@@ -43,10 +43,10 @@ line arguments. Use the '--help' argument for more detailed information.
 When running the script you will typically only have to provide your
 github username and the way ghdecoy is supposed to fill your graph.
 Currently the following two modes are supported:
-  fill   : fill all occurrences of 5 or more consecutive
-           days without commits with random noise
-  append : same as fill, but only fills the blank space
-           after the last existing commit
+
+ * fill   : fill all occurrences of 5 or more consecutive days without commits with random noise.
+ * append : same as fill, but only fills the blank space after the last existing commit.
+ * DATE[-DATE][,...] : with DATE being of the format YYYYMMMDD. Randomizes only the given date(s). See man page for details.
 
 EXAMPLE
 -------
