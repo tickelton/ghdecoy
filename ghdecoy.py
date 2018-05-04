@@ -430,6 +430,14 @@ def create_dataset(data_in, action, min_days, max_shade, force, timeframe):
                         idx_cur += 1
                         continue
                     for i in idx_range:
+                        # TODO: maybe add something like this to be able to only
+                        #       fill working days ?
+                        # if datetime.strptime(
+                        #        data_in[i]['date'],
+                        #        "%Y-%m-%dT%H:%M:%S").isoweekday() != 6
+                        #    and datetime.strptime(
+                        #            data_in[i]['date'],
+                        #            "%Y-%m-%dT%H:%M:%S").isoweekday() != 7:
                         ret.append({'date': data_in[i]['date'],
                                     'count': random.randint(0, max_shade)})
             elif idx_start == -1:
