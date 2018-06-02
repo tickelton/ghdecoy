@@ -30,7 +30,6 @@ import os
 import urllib2
 import re
 import random
-import math
 import subprocess
 import shutil
 from datetime import datetime, timedelta
@@ -234,7 +233,6 @@ def get_factor(data):
     factor = max_val / 4.0
     if factor == 0:
         return 1
-    factor = math.floor(factor)
     factor = int(factor)
     return factor
 
