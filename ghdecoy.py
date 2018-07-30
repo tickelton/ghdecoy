@@ -210,7 +210,7 @@ def calendar_valid(cal):
 
     if len(cal) < 495:
         return False
-    if cal[0].startswith('<svg '):
+    if cal[0].startswith('<svg ') or cal[1].startswith('<svg '):
         return True
     return False
 
