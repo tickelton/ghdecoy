@@ -208,9 +208,11 @@ def get_calendar(user):
 def calendar_valid(cal):
     """Quick santiy check to see if the fetched calendar looks valid."""
 
+    print(type(cal))
+    svg = 'js-calendar-graph-svg'
     if len(cal) < 495:
         return False
-    if cal[0].startswith('<svg ') or cal[1].startswith('<svg '):
+    if any(svg in c for c in cal):
         return True
     return False
 
