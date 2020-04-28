@@ -23,6 +23,13 @@ Dependencies
 ghdecoy.py only requires a working installation of python 2.7. No
 additional packages are required.
 
+Supported Operating Systems
+---------------------------
+
+ghdecoy is developed and tested on Linux.  
+MacOS is not officially supported but should work.  
+Windows is currently not supported.  
+
 Installation
 ------------
 
