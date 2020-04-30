@@ -7,6 +7,7 @@
   -n           : just create the decoy repo but don't push it to github
   -s           : push over ssh instead of https
   -v|--version : print version information and exit
+  -w           : only create commits on working days (Mo-Fr)
   -d DIR       : directory to craft the the fake repository in (default: /tmp)
   -l LANG      : make decoy repo look like language LANG
   -m COUNT     : only fill gaps of at least COUNT days (default: 5)
@@ -286,7 +287,7 @@ def parse_args(argv):
 
     try:
         opts, args = getopt.getopt(
-            argv[1:], "fhknsvd:l:m:p:r:u:", ["help", "version"])
+            argv[1:], "fhknsvwd:l:m:p:r:u:", ["help", "version"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -303,7 +304,8 @@ def parse_args(argv):
         'ssh': False,
         'timeframe': {},
         'user': os.getenv("USER"),
-        'wdir': '/tmp'
+        'wdir': '/tmp',
+        'workday': False,
     }
 
     for opt, arg in opts:
@@ -332,6 +334,8 @@ def parse_args(argv):
             conf['ssh'] = True
         elif opt == "-u":
             conf['user'] = arg
+        elif opt == "-w":
+            conf['workday'] = True
         elif opt in ("-v", "--version"):
             version()
             sys.exit(0)
@@ -373,7 +377,7 @@ def parse_calendar(cal):
     return ret
 
 
-def create_dataset(data_in, action, min_days, max_shade, force, timeframe):
+def create_dataset(data_in, action, min_days, max_shade, force, timeframe, workday):
     """Creates a data set representing the desired commits."""
 
     ret = []
@@ -404,6 +408,8 @@ def create_dataset(data_in, action, min_days, max_shade, force, timeframe):
 
                 for cal_date in data_in:
                     if cal_date['date'] == in_iso:
+                        if workday and (datetime.strptime(in_iso, "%Y-%m-%dT%H:%M:%S").isoweekday() == 6 or datetime.strptime(in_iso, "%Y-%m-%dT%H:%M:%S").isoweekday() == 7):
+                            continue
                         ret.append({'date': cal_date['date'],
                             'count': random.randint(0, max_shade)})
 
@@ -437,6 +443,8 @@ def create_dataset(data_in, action, min_days, max_shade, force, timeframe):
                         #    and datetime.strptime(
                         #            data_in[i]['date'],
                         #            "%Y-%m-%dT%H:%M:%S").isoweekday() != 7:
+                        if workday and (datetime.strptime( data_in[i]['date'], "%Y-%m-%dT%H:%M:%S").isoweekday() == 6 or datetime.strptime( data_in[i]['date'], "%Y-%m-%dT%H:%M:%S").isoweekday() == 7):
+                            continue
                         ret.append({'date': data_in[i]['date'],
                                     'count': random.randint(0, max_shade)})
             elif idx_start == -1:
@@ -520,7 +528,8 @@ def main():
 
     data_out = create_dataset(parse_calendar(cal), conf['action'],
                               conf['min_days'], conf['max_shade'],
-                              conf['force_data'], conf['timeframe'])
+                              conf['force_data'], conf['timeframe'],
+                              conf['workday'])
     if not data_out:
         print "No commits to be pushed."
         sys.exit(ret)
