@@ -35,7 +35,7 @@ import subprocess
 import shutil
 from datetime import datetime, timedelta
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 content_templates = {
     'raw': {
