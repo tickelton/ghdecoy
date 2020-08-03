@@ -9,7 +9,12 @@ class GHDecoyOnlineTests(unittest.TestCase):
 
     def test_get_calendar(self):
         cal = ghdecoy.get_calendar('tickelton')
-        self.assertEqual(cal[0].find('<svg'), 0)
+        found_svg = False
+        for row in cal:
+            if row.find('<svg'):
+                found_svg = True
+                break
+        self.assertTrue(found_svg)
 
 
 class GHDecoyIOTests(unittest.TestCase):
@@ -262,7 +267,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[2])
@@ -275,7 +280,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertDictContainsSubset({'date': '2015-01-01T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-02T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[2])
@@ -288,7 +293,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -301,7 +306,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 1, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 1, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_gap_to_small(self):
@@ -312,12 +317,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_fill_no_gap(self):
@@ -328,7 +333,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'fill', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_center(self):
@@ -339,7 +344,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_start(self):
@@ -350,7 +355,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_end(self):
@@ -361,7 +366,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertDictContainsSubset({'date': '2015-01-03T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2015-01-04T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2015-01-05T12:00:00'}, ret[2])
@@ -374,7 +379,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 1, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 1, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_gap_to_small(self):
@@ -385,12 +390,12 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 0},
             {'date': '2015-01-05T12:00:00', 'count': 0},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_empty_input(self):
         data = []
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_append_no_gap(self):
@@ -401,7 +406,7 @@ class GHDecoyMiscTests(unittest.TestCase):
             {'date': '2015-01-04T12:00:00', 'count': 1},
             {'date': '2015-01-05T12:00:00', 'count': 1},
         ]
-        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [])
+        ret = ghdecoy.create_dataset(data, 'append', 3, 4, False, [], False)
         self.assertListEqual([], ret)
 
     def test_create_dataset_timeframe_single(self):
@@ -413,7 +418,7 @@ class GHDecoyMiscTests(unittest.TestCase):
                 datetime.datetime(2016, 11, 1, 12, 0)
             ],
             'intervals': []
-        })
+        }, False)
         self.assertDictContainsSubset({'date': '2016-11-01T12:00:00'}, ret[0])
 
     def test_create_dataset_timeframe_interval(self):
@@ -430,7 +435,7 @@ class GHDecoyMiscTests(unittest.TestCase):
                 datetime.datetime(2005, 3, 7, 12, 0),
                 datetime.datetime(2005, 3, 9, 12, 0)
             ]]
-        })
+        }, False)
         self.assertDictContainsSubset({'date': '2005-03-09T12:00:00'}, ret[0])
         self.assertDictContainsSubset({'date': '2005-03-08T12:00:00'}, ret[1])
         self.assertDictContainsSubset({'date': '2005-03-07T12:00:00'}, ret[2])
@@ -442,7 +447,7 @@ class GHDecoyMiscTests(unittest.TestCase):
         ret = ghdecoy.create_dataset(data, 'timeframe', 3, 4, False, {
             'singledates': [],
             'intervals': []
-        })
+        }, False)
         self.assertListEqual([], ret)
 
     def test_create_template_https_wet(self):
