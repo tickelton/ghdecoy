@@ -1,6 +1,11 @@
 ghdecoy
 =======
 
+*NOTE: ghdecoy is no longer actively maintained!*  
+*Its successor is [impost0r](https://github.com/tickelton/impost0r) which
+addresses several of the shortcomings of ghdecoy (e.g. Windows support,
+more 'human looking' contribution data, ...).*
+
 ghdecoy is a tool to vandali^H optimize the github contributions calendar. 
 It is inspired by [gitfiti](https://github.com/gelstudios/gitfiti) but
 with a different use case in mind.
